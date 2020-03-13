@@ -4,6 +4,10 @@ var imagedata;
 var sphere;
 var model;
 
+var mixer, morphs = [];
+
+var clock = new THREE.Clock();
+
 var geometry = new THREE.Geometry();
 
 var N = 350;
@@ -21,9 +25,9 @@ function init()
     camera = new THREE.PerspectiveCamera(
     45, window.innerWidth / window.innerHeight, 1, 4000 );
 
-    camera.position.set(N/4, N/2, N*2);
+    camera.position.set(N, N, N);
 
-    camera.lookAt(new THREE.Vector3(  N/2, 0.0, N/2));
+    camera.lookAt(new THREE.Vector3(  0, 0.0, 0));
 
 
     renderer = new THREE.WebGLRenderer( { antialias: false } );
@@ -53,6 +57,10 @@ function init()
     sphere = new THREE.Mesh( geometry, material );
     scene.add( sphere );
     sky();
+    loadModel('models/', 'Tree.obj', 'Tree.mtl');
+    mixer = new THREE.AnimationMixer( scene );
+    loadAnimatedModel('models/Parrot.glb');
+        
 }
 
 
@@ -87,7 +95,15 @@ function animate()
     // Установка позиции камеры
 
     // Установка точки, на которую камера будет смотреть
-    camera.lookAt(new THREE.Vector3(  N/2, 0.0, N/2));
+   // camera.lookAt(new THREE.Vector3(  N/2, 0.0, N/2));
+
+    var delta = clock.getDelta();
+    mixer.update( delta );
+    for ( var i = 0; i < morphs.length; i ++ )
+    {
+        var morph = morphs[ i ];
+    }
+
 }
 
 
@@ -96,6 +112,10 @@ function render()
      
     // Рисованиекадра
     renderer.render( scene, camera );
+
+    
+
+
 
 }
 
@@ -155,7 +175,7 @@ function CreateTerrain()
     triangleMesh.position.set(0.0, 0.0, 0.0);
 
     scene.add(triangleMesh);
-    //console.log(triangleMesh);
+    console.log(triangleMesh);
 
 }
 
@@ -185,37 +205,58 @@ function sky()
 
 }
 
-function loadModel(path, oname, mname){
-    //функция, выполняемая в процессе загрузки моделиvar 
-    onProgress = function ( xhr ) 
-    {
-        if ( xhr.lengthComputable ) 
-        {
-            var percentComplete = xhr.loaded / xhr.total * 100;
-            console.log( Math.round(percentComplete, 2) + '% downloaded' );
-        }
-    };
-    //функция, выполняющая обработку ошибок, возникших в процессе загрузкиvar 
-    onError =function ( xhr ) { };
-    var mtlLoader =new THREE.MTLLoader();
-    mtlLoader.setBaseUrl( path );
-        mtlLoader.setPath( path );
-    //функция загрузки материала
-    mtlLoader.load( mname, function( materials ) 
-    {
-        materials.preload();
-        var objLoader =new THREE.OBJLoader();
-        objLoader.setMaterials( materials );
-        objLoader.setPath( path );
-        //функция загрузки модели
-        objLoader.load( oname, function ( object ) 
-        {
-            object.position.x = 0;
-            object.position.y = 0;
-            object.position.z = 0;
-            object.scale.set(0.2, 0.2, 0.2);
-            model = object;console.log(model);
-            scene.add( model );
-        }, onProgress, onError );
-    });
+function loadModel(path, oname, mname)
+{
+ // функция, выполняемая в процессе загрузки модели (выводит процент загрузки)
+ var onProgress = function ( xhr ) {
+ if ( xhr.lengthComputable ) {
+ var percentComplete = xhr.loaded / xhr.total * 100;
+ console.log( Math.round(percentComplete, 2) + '% downloaded' );
+ }
+ };
+ // функция, выполняющая обработку ошибок, возникших в процессе загрузки
+ var onError = function ( xhr ) { };
+ // функция, выполняющая обработку ошибок, возникших в процессе загрузки
+ var mtlLoader = new THREE.MTLLoader();
+ mtlLoader.setPath( path );
+ // функция загрузки материала
+ mtlLoader.load( mname, function( materials )
+ {
+ materials.preload();
+ var objLoader = new THREE.OBJLoader();
+ objLoader.setMaterials( materials );
+ objLoader.setPath( path );
+2
+ // функция загрузки модели
+ objLoader.load( oname, function ( object )
+ {
+ object.position.x = N/2;
+ object.position.y = 0;
+ object.position.z = N/2;
+ object.scale.set(0.2, 0.2, 0.2);
+ scene.add(object);
+ }, onProgress, onError );
+ });
+}
+
+function loadAnimatedModel(path) //где path – путь и название модели
+{
+ var loader = new THREE.GLTFLoader();
+3
+ loader.load( path, function ( gltf ) {
+ var mesh = gltf.scene.children[ 0 ];
+ var clip = gltf.animations[ 0 ];
+ //установка параметров анимации (скорость воспроизведения и стартовый фрейм)
+ mixer.clipAction( clip, mesh ).setDuration( 1 ).startAt( 0 ).play();
+ mesh.position.set( 20, 20, -5 );
+ mesh.rotation.y = Math.PI / 8;
+ mesh.scale.set( 10, 10, 10 );
+
+ mesh.castShadow = true;
+ mesh.receiveShadow = true;
+
+ scene.add( mesh );
+ morphs.push( mesh );
+
+ } );
 }
