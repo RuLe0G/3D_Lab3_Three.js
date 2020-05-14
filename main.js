@@ -11,6 +11,7 @@ var N = 350;
 var T = 10.0;
 var t = 0.0;
 var followP = false;
+var followP2 = false;
 
 var Player;
 var axisY = new THREE.Vector3(0,1,0);
@@ -92,7 +93,7 @@ function init()
     } 
     img.src = 'pics/lake.jpg';  
 
-    //sky();
+    sky();
 
             
 }
@@ -197,6 +198,27 @@ function onWindowResize()
 // В этой функции можно изменять параметры объектов и обрабатывать действия пользователя
 function animate()
 {
+
+    if (keyboard.pressed("1")) 
+    { 
+        followP = false;
+        followP2 = false;
+        camera.position.set(N/2, N*2, N);
+        camera.lookAt(new THREE.Vector3(  N/2, 0.0, N/2));
+        
+
+    }    
+    if (keyboard.pressed("2")) 
+    { 
+        followP = true;
+        followP2 = false;
+    }
+    if (keyboard.pressed("3")) 
+    { 
+        followP = false;
+        followP2 = true;
+    }
+
     var delta = clock.getDelta();
     t+=delta;    
     mixer.update( delta );
@@ -235,6 +257,7 @@ function animate()
         }
 
         if(Player != null)
+        if(followP2 == true)
         {
         // установка смещения камеры относительно объекта
         var relativeCameraOffset = new THREE.Vector3(0,50,-150);
@@ -257,7 +280,7 @@ function animate()
 
         if (keyboard.pressed("a"))
         {
-            Player.rotateOnAxis(axisZ,Math.PI/30);
+            //Player.rotateOnAxis(axisZ,Math.PI/30);
             Player.rotateOnAxis(axisY,Math.PI/30);
 
         }
@@ -325,7 +348,7 @@ function loadModel(path, oname, mname)
             } );
             
             
-            for (var i = 0; i<10; i++)
+            for (var i = 0; i<30; i++)
             {
                 var x = Math.random() * N;
                 var z = Math.random() * N;
